@@ -3,6 +3,7 @@
 import { FlashCard } from "@/components/atoms/Card/FlashCard"
 import { CardActions } from "@/components/molecules/CardActions/CardActions"
 import { CardControls } from "@/components/molecules/CardControls/CardControls"
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { cn } from "@/lib/utils"
 import { Card, ReviewQuality } from "@/types/card"
 import * as React from "react"
@@ -17,6 +18,39 @@ interface StudyCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const StudyCard = React.forwardRef<HTMLDivElement, StudyCardProps>(
   ({ className, card, isRevealed, onReveal, onAnswer, onSkip, ...props }, ref) => {
+    useKeyboardShortcuts([
+      {
+        key: ' ',
+        action: onReveal,
+        description: 'Reveal card',
+      },
+      {
+        key: '1',
+        action: () => isRevealed && onAnswer(1),
+        description: 'Again',
+      },
+      {
+        key: '2',
+        action: () => isRevealed && onAnswer(2),
+        description: 'Hard',
+      },
+      {
+        key: '3',
+        action: () => isRevealed && onAnswer(4),
+        description: 'Good',
+      },
+      {
+        key: '4',
+        action: () => isRevealed && onAnswer(5),
+        description: 'Easy',
+      },
+      {
+        key: 's',
+        action: onSkip,
+        description: 'Skip card',
+      },
+    ])
+
     return (
       <div
         ref={ref}

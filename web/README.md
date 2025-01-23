@@ -44,3 +44,25 @@ Interface de estudo funcional
 Algoritmo do Anki implementado
 Um deck de exemplo
 Sistema de progresso básico
+
+
+Funcionalidades Implementadas
+Sistema de Estudo
+Algoritmo do Anki
+Interface de cartões com animação
+Sistema de progresso
+Avaliação de respostas
+Navegação
+Página inicial com lista de decks
+Cards de deck com informações relevantes
+Navegação dinâmica entre decks
+Tratamento de decks não encontrados
+Interface Melhorada
+Tema escuro/claro com persistência
+Navbar com navegação e toggle de tema
+Atalhos de teclado:
+Espaço: Revelar cartão
+1-4: Avaliar resposta
+S: Pular cartão
+Animações suaves de transição
+Layout responsivo
