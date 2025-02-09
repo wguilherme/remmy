@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "deck": {
+    "id": "spanish-basics",
+    "name": "Spanish Basics",
+    "description": "Basic Spanish vocabulary and phrases for beginners",
+    "category": "Language Learning",
+    "tags": ["spanish", "beginner", "vocabulary", "phrases"],
+    "author": "Remmy Team",
+    "version": "1.0.0",
+    "language": {
+      "from": "en",
+      "to": "es"
+    },
+    "createdAt": "2024-01-23T19:58:28.000Z",
+    "updatedAt": "2024-01-23T19:58:28.000Z",
+    "cards": [
+      {
+        "id": "1",
+        "front": "Hello",
+        "back": "¡Hola!",
+        "notes": "The most common greeting in Spanish",
+        "tags": ["greetings", "basic"],
+        "createdAt": "2024-01-23T19:58:28.000Z",
+        "updatedAt": "2024-01-23T19:58:28.000Z"
+      },
+      {
+        "id": "2",
+        "front": "Good morning",
+        "back": "Buenos días",
+        "notes": "Used until noon",
+        "tags": ["greetings", "time"],
+        "createdAt": "2024-01-23T19:58:28.000Z",
+        "updatedAt": "2024-01-23T19:58:28.000Z"
+      },
+      {
+        "id": "3",
+        "front": "How are you?",
+        "back": "¿Cómo estás?",
+        "notes": "Informal version, use '¿Cómo está usted?' for formal situations",
+        "tags": ["greetings", "questions"],
+        "createdAt": "2024-01-23T19:58:28.000Z",
+        "updatedAt": "2024-01-23T19:58:28.000Z"
+      }
+    ]
+  }
+}

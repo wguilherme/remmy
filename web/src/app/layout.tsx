@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/organisms/Navbar/Navbar"
 import { ThemeProvider } from "@/components/providers/ThemeProvider"
+import { DeckProvider } from "@/components/providers/DeckProvider"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
@@ -7,8 +8,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Remmy - Spaced Repetition Learning",
-  description: "Learn anything with spaced repetition",
+  title: "Remmy",
+  description: "Your personal language learning companion",
 }
 
 export default function RootLayout({
@@ -27,7 +28,7 @@ export default function RootLayout({
         >
           <div className="relative min-h-screen flex flex-col">
             <Navbar />
-            {children}
+            <DeckProvider>{children}</DeckProvider>
           </div>
         </ThemeProvider>
       </body>

@@ -1,53 +1,107 @@
-import { Card, ReviewQuality } from '@/types/card'
-import { addDays } from 'date-fns'
+import { Card, ReviewQuality } from "@/types/card"
+import { addDays } from "date-fns"
 
-const INITIAL_EASE_FACTOR = 2.5
+// Constantes do algoritmo Anki
 const MINIMUM_EASE_FACTOR = 1.3
 const EASE_BONUS = 0.15
-const EASE_PENALTY = 0.2
+const MINIMUM_INTERVAL = 1
+const INITIAL_EASE_FACTOR = 2.5
+const INITIAL_INTERVAL = 1
 
-export function calculateNextReview(
-  card: Card,
-  quality: ReviewQuality
-): Pick<Card, 'interval' | 'easeFactor' | 'dueDate'> {
-  let { interval = 0, easeFactor = INITIAL_EASE_FACTOR } = card
-
-  // Adjust ease factor based on answer quality
-  if (quality < 3) {
-    easeFactor = Math.max(MINIMUM_EASE_FACTOR, easeFactor - EASE_PENALTY)
-    interval = 1 // Reset interval for failed cards
-  } else {
-    easeFactor = easeFactor + (EASE_BONUS * (quality - 3))
-    
-    // Calculate new interval
-    if (interval === 0) {
-      interval = 1
-    } else if (interval === 1) {
-      interval = 6
-    } else {
-      interval = Math.round(interval * easeFactor)
-    }
+// Calcula o próximo intervalo baseado na qualidade da revisão
+export function calculateNextInterval(card: Card, quality: ReviewQuality): number {
+  let interval = card.interval
+  
+  switch (quality) {
+    case ReviewQuality.AGAIN:
+      interval = MINIMUM_INTERVAL
+      break
+    case ReviewQuality.HARD:
+      interval = Math.max(MINIMUM_INTERVAL, interval * 1.2)
+      break
+    case ReviewQuality.GOOD:
+      interval = interval === 0 ? INITIAL_INTERVAL : interval * card.easeFactor
+      break
+    case ReviewQuality.EASY:
+      interval = interval === 0 
+        ? INITIAL_INTERVAL * 2 
+        : interval * card.easeFactor * (1 + EASE_BONUS)
+      break
   }
 
-  // Calculate due date
-  const dueDate = addDays(new Date(), interval)
+  return Math.round(interval)
+}
+
+// Calcula o novo fator de facilidade baseado na qualidade da revisão
+export function calculateNewEaseFactor(card: Card, quality: ReviewQuality): number {
+  let easeFactor = card.easeFactor
+
+  switch (quality) {
+    case ReviewQuality.AGAIN:
+      easeFactor = Math.max(MINIMUM_EASE_FACTOR, easeFactor - 0.2)
+      break
+    case ReviewQuality.HARD:
+      easeFactor = Math.max(MINIMUM_EASE_FACTOR, easeFactor - 0.15)
+      break
+    case ReviewQuality.GOOD:
+      // Mantém o mesmo fator de facilidade
+      break
+    case ReviewQuality.EASY:
+      easeFactor = easeFactor + 0.15
+      break
+  }
+
+  return easeFactor
+}
+
+// Calcula a próxima data de revisão
+export function calculateNextReviewDate(interval: number): Date {
+  const now = new Date()
+  return addDays(now, interval)
+}
+
+// Processa uma revisão de cartão
+export function processReview(card: Card, quality: ReviewQuality): Partial<Card> {
+  const newInterval = calculateNextInterval(card, quality)
+  const newEaseFactor = calculateNewEaseFactor(card, quality)
+  const nextReview = calculateNextReviewDate(newInterval)
 
   return {
-    interval,
-    easeFactor,
-    dueDate
+    interval: newInterval,
+    easeFactor: newEaseFactor,
+    lastReview: new Date(),
+    nextReview,
+    lapses: quality === ReviewQuality.AGAIN ? card.lapses + 1 : card.lapses,
+    dueDate: nextReview,
   }
 }
 
-export function isCardDue(card: Card): boolean {
-  if (!card.dueDate) return true
-  return new Date() >= card.dueDate
+// Inicializa um novo cartão com valores padrão
+export function initializeCard(card: Partial<Card>): Card {
+  return {
+    ...card,
+    id: card.id || crypto.randomUUID(),
+    easeFactor: INITIAL_EASE_FACTOR,
+    interval: 0,
+    lapses: 0,
+    dueDate: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as Card
 }
 
+// Verifica se um cartão está em atraso
+export function isCardDue(card: Card): boolean {
+  const now = new Date()
+  return card.dueDate <= now
+}
+
+// Retorna os cartões em atraso
 export function getDueCards(cards: Card[]): Card[] {
   return cards.filter(isCardDue)
 }
 
+// Calcula o progresso de estudo
 export function calculateStudyProgress(
   totalCards: number,
   studiedCards: number
@@ -55,7 +109,7 @@ export function calculateStudyProgress(
   return Math.round((studiedCards / totalCards) * 100)
 }
 
-// Função para ordenar cards por prioridade
+// Ordena os cartões por prioridade
 export function sortCardsByPriority(cards: Card[]): Card[] {
   return [...cards].sort((a, b) => {
     // Cards sem dueDate vêm primeiro
@@ -68,17 +122,17 @@ export function sortCardsByPriority(cards: Card[]): Card[] {
   })
 }
 
-// Função para atualizar estatísticas do card após uma revisão
+// Atualiza as estatísticas do cartão após uma revisão
 export function updateCardStats(
   card: Card,
   quality: ReviewQuality
 ): Partial<Card> {
-  const nextReview = calculateNextReview(card, quality)
+  const nextReview = processReview(card, quality)
   
   return {
     ...nextReview,
     lastReviewed: new Date(),
     reviewCount: (card.reviewCount || 0) + 1,
-    lapses: quality < 3 ? (card.lapses || 0) + 1 : card.lapses
+    lapses: quality === ReviewQuality.AGAIN ? (card.lapses || 0) + 1 : card.lapses
   }
 }
