@@ -4,13 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
 
-type ThemeProviderProps = {
-  children: React.ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
-}
-
-type ThemeProviderState = {
+interface ThemeProviderState {
   theme: Theme
   setTheme: (theme: Theme) => void
 }
@@ -22,14 +16,24 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
+interface ThemeProviderProps {
+  children: React.ReactNode
+  defaultTheme?: Theme
+  storageKey?: string
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  storageKey = 'ui-theme',
-  ...props
+  storageKey = 'remmy-ui-theme',
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    () => {
+      if (typeof window !== 'undefined') {
+        return (localStorage.getItem(storageKey) as Theme) || defaultTheme
+      }
+      return defaultTheme
+    }
   )
 
   useEffect(() => {
@@ -50,6 +54,12 @@ export function ThemeProvider({
     root.classList.add(theme)
   }, [theme])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, theme)
+    }
+  }, [theme, storageKey])
+
   const value = {
     theme,
     setTheme: (theme: Theme) => {
@@ -59,7 +69,7 @@ export function ThemeProvider({
   }
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext.Provider value={value}>
       {children}
     </ThemeProviderContext.Provider>
   )

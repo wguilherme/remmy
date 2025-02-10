@@ -1,16 +1,10 @@
-import { Navbar } from "@/components/organisms/Navbar/Navbar"
-import { ThemeProvider } from "@/components/providers/ThemeProvider"
-import { DeckProvider } from "@/components/providers/DeckProvider"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
+import { DeckProvider } from '@/components/providers/DeckProvider'
+import { Toaster } from '@/components/atoms/Toast/Toaster'
+import '@/styles/globals.css'
+import { Inter } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 
-const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "Remmy",
-  description: "Your personal language learning companion",
-}
+const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({
   children,
@@ -26,10 +20,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative min-h-screen flex flex-col">
-            <Navbar />
-            <DeckProvider>{children}</DeckProvider>
-          </div>
+          <DeckProvider>
+            {children}
+            <Toaster />
+          </DeckProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,5 +1,5 @@
 {
-  "name": "remmy-api",
+  "name": "@remmy/api",
   "version": "1.0.0",
   "module": "src/index.ts",
   "type": "module",
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^0.8.0",
+    "@remmy/domain": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "elysia": "^0.8.17",

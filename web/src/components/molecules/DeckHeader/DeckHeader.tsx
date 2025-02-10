@@ -33,7 +33,7 @@ export function DeckHeader({ deck }: DeckHeaderProps) {
             Created{" "}
             {new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
-            }).format(deck.createdAt)}
+            }).format(new Date(deck.createdAt))}
           </span>
         </div>
         {deck.lastStudied && (
@@ -43,7 +43,7 @@ export function DeckHeader({ deck }: DeckHeaderProps) {
               Last studied{" "}
               {new Intl.DateTimeFormat("en-US", {
                 dateStyle: "medium",
-              }).format(deck.lastStudied)}
+              }).format(new Date(deck.lastStudied))}
             </span>
           </div>
         )}

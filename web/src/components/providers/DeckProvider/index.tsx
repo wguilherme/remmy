@@ -1,22 +1,18 @@
 'use client'
 
 import { Deck } from '@remmy/domain'
-import { createContext, useCallback, useContext, useState } from 'react'
+import React, { createContext, useContext, useState } from 'react'
 
 export interface DeckContextType {
   decks: Deck[]
   isLoading: boolean
   loadDecks: () => Promise<void>
-  getDeckById: (id: string) => Deck | undefined
-  updateDeck: (deck: Deck) => void
 }
 
 const defaultContext: DeckContextType = {
   decks: [],
   isLoading: false,
   loadDecks: async () => {},
-  getDeckById: () => undefined,
-  updateDeck: () => {},
 }
 
 const DeckContext = createContext<DeckContextType>(defaultContext)
@@ -25,7 +21,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const [decks, setDecks] = useState<Deck[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const loadDecks = useCallback(async () => {
+  const loadDecks = async () => {
     setIsLoading(true)
     try {
       const response = await fetch('/api/decks')
@@ -33,38 +29,18 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Failed to load decks')
       }
       const data = await response.json()
-      console.log('Loaded decks:', data) 
       setDecks(data)
     } catch (error) {
       console.error('Error loading decks:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [])
-
-  const getDeckById = useCallback(
-    (id: string) => {
-      return decks.find((deck) => deck.id === id)
-    },
-    [decks]
-  )
-
-  const updateDeck = useCallback((updatedDeck: Deck) => {
-    setDecks((prevDecks) =>
-      prevDecks.map((deck) =>
-        deck.id === updatedDeck.id ? updatedDeck : deck
-      )
-    )
-  }, [])
-
-  console.log('Current decks:', decks) 
+  }
 
   const value: DeckContextType = {
     decks,
     isLoading,
     loadDecks,
-    getDeckById,
-    updateDeck,
   }
 
   return (

@@ -1,22 +1,7 @@
 import { Schema } from 'mongoose'
+import { Card } from '@remmy/domain'
 
-export interface ICard {
-  id: string
-  front: string
-  back: string
-  notes?: string
-  tags?: string[]
-  easeFactor: number
-  interval: number
-  dueDate: Date
-  lapses: number
-  lastReview?: Date
-  nextReview?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-export const CardSchema = new Schema<ICard>(
+export const CardSchema = new Schema<Card>(
   {
     id: { type: String, required: true },
     front: { type: String, required: true },

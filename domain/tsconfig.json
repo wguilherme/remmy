@@ -3,15 +3,10 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["bun-types"],
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@remmy/domain": ["../domain/src"]
-    }
+    "noEmit": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

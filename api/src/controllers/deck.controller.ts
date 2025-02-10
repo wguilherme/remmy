@@ -1,4 +1,5 @@
-import { DeckModel, IDeck } from '../models'
+import { DeckModel } from '../models'
+import { Deck, Card } from '@remmy/domain'
 import { Errors } from '../utils/error'
 
 export class DeckController {
@@ -7,7 +8,7 @@ export class DeckController {
     search?: string
     category?: string
     tags?: string[]
-  }): Promise<IDeck[]> {
+  }): Promise<Deck[]> {
     const query: any = {}
 
     if (filters?.search) {
@@ -26,7 +27,7 @@ export class DeckController {
   }
 
   // Buscar deck por ID
-  static async getDeckById(id: string): Promise<IDeck> {
+  static async getDeckById(id: string): Promise<Deck> {
     const deck = await DeckModel.findOne({ id })
     if (!deck) {
       throw Errors.NotFound(`Deck with id ${id} not found`)
@@ -35,7 +36,7 @@ export class DeckController {
   }
 
   // Criar novo deck
-  static async createDeck(data: Omit<IDeck, 'id' | 'createdAt' | 'updatedAt' | 'stats'>): Promise<IDeck> {
+  static async createDeck(data: Omit<Deck, 'id' | 'createdAt' | 'updatedAt' | 'stats'>): Promise<Deck> {
     const deck = new DeckModel({
       ...data,
       id: crypto.randomUUID(),
@@ -44,7 +45,7 @@ export class DeckController {
   }
 
   // Atualizar deck
-  static async updateDeck(id: string, data: Partial<IDeck>): Promise<IDeck> {
+  static async updateDeck(id: string, data: Partial<Deck>): Promise<Deck> {
     const deck = await DeckModel.findOneAndUpdate(
       { id },
       { $set: data },
@@ -65,7 +66,7 @@ export class DeckController {
   }
 
   // Adicionar card ao deck
-  static async addCard(deckId: string, card: Omit<IDeck['cards'][0], 'id' | 'createdAt' | 'updatedAt'>): Promise<IDeck> {
+  static async addCard(deckId: string, card: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>): Promise<Deck> {
     const deck = await DeckModel.findOne({ id: deckId })
     if (!deck) {
       throw Errors.NotFound(`Deck with id ${deckId} not found`)
@@ -82,13 +83,13 @@ export class DeckController {
   }
 
   // Atualizar card
-  static async updateCard(deckId: string, cardId: string, data: Partial<IDeck['cards'][0]>): Promise<IDeck> {
+  static async updateCard(deckId: string, cardId: string, data: Partial<Card>): Promise<Deck> {
     const deck = await DeckModel.findOne({ id: deckId })
     if (!deck) {
       throw Errors.NotFound(`Deck with id ${deckId} not found`)
     }
 
-    const card = deck.cards.find(c => c.id === cardId)
+    const card = deck.cards.find((c: Card) => c.id === cardId)
     if (!card) {
       throw Errors.NotFound(`Card with id ${cardId} not found in deck ${deckId}`)
     }
@@ -100,13 +101,13 @@ export class DeckController {
   }
 
   // Deletar card
-  static async deleteCard(deckId: string, cardId: string): Promise<IDeck> {
+  static async deleteCard(deckId: string, cardId: string): Promise<Deck> {
     const deck = await DeckModel.findOne({ id: deckId })
     if (!deck) {
       throw Errors.NotFound(`Deck with id ${deckId} not found`)
     }
 
-    const cardIndex = deck.cards.findIndex(c => c.id === cardId)
+    const cardIndex = deck.cards.findIndex((c: Card) => c.id === cardId)
     if (cardIndex === -1) {
       throw Errors.NotFound(`Card with id ${cardId} not found in deck ${deckId}`)
     }

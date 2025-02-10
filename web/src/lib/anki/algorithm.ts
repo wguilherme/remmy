@@ -1,78 +1,64 @@
-import { Card, ReviewQuality } from "@/types/card"
-import { addDays } from "date-fns"
+import { Card, ReviewQuality } from '@remmy/domain'
 
 // Constantes do algoritmo Anki
-const MINIMUM_EASE_FACTOR = 1.3
-const EASE_BONUS = 0.15
-const MINIMUM_INTERVAL = 1
-const INITIAL_EASE_FACTOR = 2.5
-const INITIAL_INTERVAL = 1
+const MIN_EASE_FACTOR = 1.3
+const EASE_BONUS = 1.3
+const INTERVAL_MODIFIER = 1.0
 
 // Calcula o próximo intervalo baseado na qualidade da revisão
-export function calculateNextInterval(card: Card, quality: ReviewQuality): number {
-  let interval = card.interval
-  
-  switch (quality) {
-    case ReviewQuality.AGAIN:
-      interval = MINIMUM_INTERVAL
-      break
-    case ReviewQuality.HARD:
-      interval = Math.max(MINIMUM_INTERVAL, interval * 1.2)
-      break
-    case ReviewQuality.GOOD:
-      interval = interval === 0 ? INITIAL_INTERVAL : interval * card.easeFactor
-      break
-    case ReviewQuality.EASY:
-      interval = interval === 0 
-        ? INITIAL_INTERVAL * 2 
-        : interval * card.easeFactor * (1 + EASE_BONUS)
-      break
+function calculateNextReview(card: Card, quality: ReviewQuality) {
+  let { interval, easeFactor, lapses } = card
+
+  // If the card was failed
+  if (quality === ReviewQuality.AGAIN) {
+    interval = 1
+    easeFactor = Math.max(MIN_EASE_FACTOR, easeFactor - 0.2)
+    lapses += 1
   }
+  // If the card was remembered
+  else {
+    if (interval === 0) {
+      interval = 1
+    } else if (interval === 1) {
+      interval = 6
+    } else {
+      interval = Math.round(interval * easeFactor * INTERVAL_MODIFIER)
+    }
 
-  return Math.round(interval)
-}
-
-// Calcula o novo fator de facilidade baseado na qualidade da revisão
-export function calculateNewEaseFactor(card: Card, quality: ReviewQuality): number {
-  let easeFactor = card.easeFactor
-
-  switch (quality) {
-    case ReviewQuality.AGAIN:
-      easeFactor = Math.max(MINIMUM_EASE_FACTOR, easeFactor - 0.2)
-      break
-    case ReviewQuality.HARD:
-      easeFactor = Math.max(MINIMUM_EASE_FACTOR, easeFactor - 0.15)
-      break
-    case ReviewQuality.GOOD:
-      // Mantém o mesmo fator de facilidade
-      break
-    case ReviewQuality.EASY:
+    // Adjust ease factor
+    if (quality === ReviewQuality.HARD) {
+      easeFactor = Math.max(MIN_EASE_FACTOR, easeFactor - 0.15)
+    } else if (quality === ReviewQuality.GOOD) {
+      // Keep the same ease factor
+    } else if (quality === ReviewQuality.EASY) {
       easeFactor = easeFactor + 0.15
-      break
+    }
   }
 
-  return easeFactor
-}
+  // Calculate next review date
+  const date = new Date()
+  date.setDate(date.getDate() + interval)
 
-// Calcula a próxima data de revisão
-export function calculateNextReviewDate(interval: number): Date {
-  const now = new Date()
-  return addDays(now, interval)
+  return {
+    interval,
+    easeFactor,
+    lapses,
+    date,
+  }
 }
 
 // Processa uma revisão de cartão
-export function processReview(card: Card, quality: ReviewQuality): Partial<Card> {
-  const newInterval = calculateNextInterval(card, quality)
-  const newEaseFactor = calculateNewEaseFactor(card, quality)
-  const nextReview = calculateNextReviewDate(newInterval)
+export function processReview(card: Card, quality: ReviewQuality) {
+  const now = new Date()
+  const nextReview = calculateNextReview(card, quality)
 
   return {
-    interval: newInterval,
-    easeFactor: newEaseFactor,
-    lastReview: new Date(),
-    nextReview,
-    lapses: quality === ReviewQuality.AGAIN ? card.lapses + 1 : card.lapses,
-    dueDate: nextReview,
+    interval: nextReview.interval,
+    easeFactor: nextReview.easeFactor,
+    lapses: nextReview.lapses,
+    nextReview: nextReview.date.toISOString(),
+    lastReview: now,
+    dueDate: nextReview.date,
   }
 }
 
@@ -81,7 +67,7 @@ export function initializeCard(card: Partial<Card>): Card {
   return {
     ...card,
     id: card.id || crypto.randomUUID(),
-    easeFactor: INITIAL_EASE_FACTOR,
+    easeFactor: 2.5,
     interval: 0,
     lapses: 0,
     dueDate: new Date(),
@@ -133,6 +119,5 @@ export function updateCardStats(
     ...nextReview,
     lastReviewed: new Date(),
     reviewCount: (card.reviewCount || 0) + 1,
-    lapses: quality === ReviewQuality.AGAIN ? (card.lapses || 0) + 1 : card.lapses
   }
 }

@@ -1,78 +1,77 @@
-import { Card, Deck } from "@/types/card"
-import { initializeCard } from "../anki/algorithm"
-import { v4 as uuidv4 } from 'uuid'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Deck } from '@remmy/domain'
+import { z } from 'zod'
 
-interface DeckImport {
-  version: string
-  deck: Deck
+const cardSchema = z.object({
+  front: z.string(),
+  back: z.string(),
+  notes: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+})
+
+const deckSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  tags: z.array(z.string()).optional(),
+  cards: z.array(cardSchema),
+})
+
+export type DeckImport = z.infer<typeof deckSchema>
+
+export function validateDeckImport(data: unknown): data is DeckImport {
+  try {
+    deckSchema.parse(data)
+    return true
+  } catch (error) {
+    return false
+  }
 }
 
-export function validateDeckImport(data: unknown): DeckImport {
-  if (!data || typeof data !== "object") {
-    throw new Error("Invalid file format")
+export function parseDeckImport(data: DeckImport): Omit<Deck, 'id'> {
+  const now = new Date()
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  return {
+    name: data.name,
+    description: data.description,
+    tags: data.tags || [],
+    cards: data.cards.map((card) => ({
+      id: crypto.randomUUID(),
+      front: card.front,
+      back: card.back,
+      notes: card.notes,
+      tags: card.tags || [],
+      createdAt: now,
+      updatedAt: now,
+      dueDate: tomorrow,
+      lastReview: undefined,
+      nextReview: undefined,
+      easeFactor: 2.5,
+      interval: 0,
+      lapses: 0,
+    })),
+    stats: {
+      totalCards: data.cards.length,
+      newCards: data.cards.length,
+      cardsToReview: 0,
+      masteredCards: 0,
+    },
+    createdAt: now,
+    updatedAt: now,
   }
-
-  const importData = data as Record<string, any>
-
-  if (!importData.version || typeof importData.version !== "string") {
-    throw new Error("Missing or invalid version")
-  }
-
-  if (!importData.deck || typeof importData.deck !== "object") {
-    throw new Error("Missing or invalid deck data")
-  }
-
-  const { deck } = importData
-
-  // Validar campos obrigatórios do deck
-  const requiredDeckFields = ["name", "description", "cards"]
-  for (const field of requiredDeckFields) {
-    if (!deck[field]) {
-      throw new Error(`Missing required deck field: ${field}`)
-    }
-  }
-
-  if (!Array.isArray(deck.cards)) {
-    throw new Error("Cards must be an array")
-  }
-
-  // Validar campos obrigatórios de cada card
-  deck.cards.forEach((card: any, index: number) => {
-    const requiredCardFields = ["front", "back"]
-    for (const field of requiredCardFields) {
-      if (!card[field]) {
-        throw new Error(`Missing required card field: ${field} in card ${index + 1}`)
-      }
-    }
-  })
-
-  // Gerar novo ID para o deck
-  deck.id = uuidv4()
-  deck.createdAt = new Date()
-  deck.updatedAt = new Date()
-
-  // Inicializar cada card com o algoritmo Anki
-  deck.cards = deck.cards.map((card: Partial<Card>) => initializeCard(card))
-
-  return importData as DeckImport
 }
 
 export function prepareDeckExport(deck: Deck): DeckImport {
   return {
-    version: "1.0",
-    deck: {
-      ...deck,
-      cards: deck.cards.map(card => ({
-        ...card,
-        createdAt: card.createdAt.toISOString(),
-        updatedAt: card.updatedAt.toISOString(),
-        dueDate: card.dueDate.toISOString(),
-        lastReview: card.lastReview?.toISOString(),
-        nextReview: card.nextReview?.toISOString(),
-      })),
-      createdAt: deck.createdAt.toISOString(),
-      updatedAt: deck.updatedAt.toISOString(),
-      lastStudied: deck.lastStudied?.toISOString(),
-    },
+    name: deck.name,
+    description: deck.description,
+    tags: deck.tags,
+    cards: deck.cards.map((card) => ({
+      front: card.front,
+      back: card.back,
+      notes: card.notes,
+      tags: card.tags,
+    })),
   }
 }
