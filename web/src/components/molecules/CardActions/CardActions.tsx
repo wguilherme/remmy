@@ -21,8 +21,9 @@ const CardActions = React.forwardRef<HTMLDivElement, CardActionsProps>(
         {...props}
       >
         <Button
+          variant="danger"
           onClick={() => onAnswer(1)}
-          className="w-full bg-red-500 hover:bg-red-600 text-white"
+          className="w-full"
         >
           <div className="flex items-center gap-1.5">
             <span className="font-medium">Again</span>
@@ -30,8 +31,9 @@ const CardActions = React.forwardRef<HTMLDivElement, CardActionsProps>(
           </div>
         </Button>
         <Button
+          variant="secondary"
           onClick={() => onAnswer(2)}
-          className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700"
+          className="w-full"
         >
           <div className="flex items-center gap-1.5">
             <span className="font-medium">Hard</span>
@@ -39,8 +41,9 @@ const CardActions = React.forwardRef<HTMLDivElement, CardActionsProps>(
           </div>
         </Button>
         <Button
+          variant="primary"
           onClick={() => onAnswer(4)}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          className="w-full"
         >
           <div className="flex items-center gap-1.5">
             <span className="font-medium">Good</span>
@@ -48,8 +51,9 @@ const CardActions = React.forwardRef<HTMLDivElement, CardActionsProps>(
           </div>
         </Button>
         <Button
+          variant="success"
           onClick={() => onAnswer(5)}
-          className="w-full bg-green-500 hover:bg-green-600 text-white"
+          className="w-full"
         >
           <div className="flex items-center gap-1.5">
             <span className="font-medium">Easy</span>

@@ -1,7 +1,7 @@
 'use client'
 
 import { Deck } from '@remmy/domain'
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
 export interface DeckContextType {
   decks: Deck[]
@@ -33,7 +33,6 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Failed to load decks')
       }
       const data = await response.json()
-      console.log('Loaded decks:', data) 
       setDecks(data)
     } catch (error) {
       console.error('Error loading decks:', error)
@@ -57,7 +56,9 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
     )
   }, [])
 
-  console.log('Current decks:', decks) 
+  useEffect(() => {
+    loadDecks()
+  }, [loadDecks])
 
   const value: DeckContextType = {
     decks,

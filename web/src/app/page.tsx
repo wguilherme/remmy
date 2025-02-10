@@ -1,23 +1,32 @@
 'use client'
 
 import { DeckList } from '@/components/organisms/DeckList'
-import { ImportExportActions } from '@/components/organisms/ImportExportActions/ImportExportActions'
-import { useDecks, type DeckContextType } from '@/components/providers/DeckProvider'
+import { useDecks } from '@/components/providers/DeckProvider'
+import { Brain } from 'lucide-react'
 import { useEffect } from 'react'
 
 export default function Home() {
-  const { decks, loadDecks, isLoading }: DeckContextType = useDecks()
+  const { decks, loadDecks } = useDecks()
 
   useEffect(() => {
-    void loadDecks()
-  }, []) 
+    loadDecks()
+  }, [loadDecks])
 
   return (
-    <main className="container mx-auto p-4">
-      <div className="flex flex-col gap-4">
-        <ImportExportActions onImportSuccess={loadDecks} />
-        <DeckList decks={decks} isLoading={isLoading} />
+    <div className="container py-8">
+      <div className="mb-8 flex items-center gap-4">
+        <div className="rounded-full bg-primary/10 p-4">
+          <Brain className="h-12 w-12 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Your Decks</h1>
+          <p className="text-lg text-muted-foreground">
+            Create and manage your flashcard decks
+          </p>
+        </div>
       </div>
-    </main>
+
+      <DeckList decks={decks} />
+    </div>
   )
 }

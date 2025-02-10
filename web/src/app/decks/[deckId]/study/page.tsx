@@ -1,166 +1,146 @@
 'use client'
 
-import { Button } from "@/components/atoms/Button/Button"
-import { FlashCard } from "@/components/atoms/FlashCard"
-import { Typography } from "@/components/atoms/Typography/Typography"
-import { useDecks } from "@/components/providers/DeckProvider"
-import { processReview } from "@/lib/anki/algorithm"
-import { ReviewQuality } from "@remmy/domain"
-import { ArrowLeft, Check, ThumbsDown, ThumbsUp, X } from "lucide-react"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { Button } from '@/components/atoms/Button'
+import { Card } from '@/components/atoms/Card'
+import { FlashCard } from '@/components/atoms/FlashCard'
+import { useDecks } from '@/components/providers/DeckProvider'
+import { processReview } from '@/lib/anki/algorithm'
+import { Card as CardType, ReviewQuality } from '@remmy/domain'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-export default function StudyPage() {
-  const params = useParams()
-  const router = useRouter()
-  const { getDeckById, updateDeck } = useDecks()
+export default function StudyPage({
+  params,
+}: {
+  params: { deckId: string }
+}) {
+  const { decks, updateDeck } = useDecks()
   const [isRevealed, setIsRevealed] = useState(false)
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
 
-  const deck = getDeckById(params.deckId as string)
+  const deck = useMemo(
+    () => decks.find((deck) => deck.id === params.deckId),
+    [decks, params.deckId]
+  )
 
-  useEffect(() => {
-    if (!deck) {
-      router.push('/decks')
-    }
-  }, [deck, router])
+  const cards = useMemo(() => {
+    if (!deck) return []
+    return deck.cards
+      .filter((card) => {
+        if (!card.nextReview) return true
+        return new Date(card.nextReview) <= new Date()
+      })
+      .sort((a, b) => {
+        if (!a.nextReview) return -1
+        if (!b.nextReview) return 1
+        return (
+          new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime()
+        )
+      })
+  }, [deck])
 
-  if (!deck) {
-    return null
-  }
-
-  const currentCard = deck.cards[currentCardIndex]
+  const currentCard = useMemo(
+    () => cards[currentCardIndex],
+    [cards, currentCardIndex]
+  )
 
   const handleReview = useCallback(
     (quality: ReviewQuality) => {
-      if (!currentCard) return
+      if (!deck || !currentCard) return
 
-      const now = new Date()
-      const updatedCard = {
+      const now = new Date().toISOString()
+      const review = processReview(currentCard, quality)
+
+      const updatedCard: CardType = {
         ...currentCard,
-        ...processReview(currentCard, quality),
-        lastReview: now.toISOString(),
+        ...review,
+        lastReview: now,
       }
 
-      const updatedCards = [...deck.cards]
-      updatedCards[currentCardIndex] = updatedCard
-
-      updateDeck({
+      const updatedDeck = {
         ...deck,
-        cards: updatedCards,
-        lastStudied: now.toISOString(),
-      })
-
-      if (currentCardIndex < deck.cards.length - 1) {
-        setCurrentCardIndex((prev) => prev + 1)
-        setIsRevealed(false)
-      } else {
-        router.push(`/decks/${deck.id}`)
+        cards: deck.cards.map((card) =>
+          card.id === currentCard.id ? updatedCard : card
+        ),
+        lastStudied: now,
       }
+
+      updateDeck(updatedDeck)
+      setCurrentCardIndex((index) => index + 1)
+      setIsRevealed(false)
     },
-    [currentCard, currentCardIndex, deck, router, updateDeck]
+    [currentCard, deck, updateDeck]
   )
 
-  if (!currentCard) {
-    return (
-      <main className="container mx-auto p-6 space-y-8">
-        <Link href={`/decks/${deck.id}`}>
-          <Button variant="ghost">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Deck
-          </Button>
-        </Link>
+  useEffect(() => {
+    if (!deck) {
+      // TODO: handle deck not found
+      return
+    }
+  }, [deck])
 
-        <div className="text-center space-y-2">
-          <Typography variant="h2">No cards to study</Typography>
-          <Typography variant="subtle">
-            This deck has no cards. Add some cards to start studying!
-          </Typography>
-        </div>
-      </main>
+  if (!deck || !currentCard) {
+    return (
+      <div className="container mx-auto flex h-[calc(100vh-4rem)] items-center justify-center p-4">
+        <Card className="flex flex-col items-center justify-center gap-4 p-8 text-center">
+          <div className="space-y-1">
+            <h3 className="font-semibold">No cards to review</h3>
+            <p className="text-sm text-muted-foreground">
+              All cards have been reviewed. Come back later!
+            </p>
+          </div>
+        </Card>
+      </div>
     )
   }
 
-  const progress = Math.round(((currentCardIndex + 1) / deck.cards.length) * 100)
-
   return (
-    <main className="container mx-auto p-6 space-y-8">
+    <div className="container mx-auto flex h-[calc(100vh-4rem)] flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
-        <Link href={`/decks/${deck.id}`}>
-          <Button variant="ghost">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Deck
-          </Button>
-        </Link>
-        <Typography variant="subtle">
-          Card {currentCardIndex + 1} of {deck.cards.length}
-        </Typography>
+        <div>
+          <h1 className="text-2xl font-bold">{deck.name}</h1>
+          <p className="text-sm text-muted-foreground">
+            Card {currentCardIndex + 1} of {cards.length}
+          </p>
+        </div>
       </div>
 
-      <div className="w-full bg-muted rounded-full h-2">
-        <div
-          className="bg-primary h-2 rounded-full transition-all"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      <div className="flex justify-center">
+      <div className="flex flex-1 items-center justify-center">
         <FlashCard
           front={currentCard.front}
           back={currentCard.back}
-          notes={currentCard.notes}
           isRevealed={isRevealed}
-          onFlip={() => setIsRevealed(!isRevealed)}
+          onReveal={() => setIsRevealed(true)}
         />
       </div>
 
-      <div className="flex justify-center gap-4">
-        {!isRevealed ? (
+      {isRevealed && (
+        <div className="grid grid-cols-4 gap-2">
           <Button
-            size="lg"
-            onClick={() => setIsRevealed(true)}
-            className="w-full max-w-sm"
+            variant="destructive"
+            onClick={() => handleReview(ReviewQuality.BLACKOUT)}
           >
-            Show Answer
+            Again
           </Button>
-        ) : (
-          <div className="flex gap-2 w-full max-w-2xl">
-            <Button
-              variant="destructive"
-              onClick={() => handleReview(ReviewQuality.AGAIN)}
-              className="flex-1"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Again
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleReview(ReviewQuality.HARD)}
-              className="flex-1"
-            >
-              <ThumbsDown className="w-4 h-4 mr-2" />
-              Hard
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleReview(ReviewQuality.GOOD)}
-              className="flex-1"
-            >
-              <ThumbsUp className="w-4 h-4 mr-2" />
-              Good
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => handleReview(ReviewQuality.EASY)}
-              className="flex-1"
-            >
-              <Check className="w-4 h-4 mr-2" />
-              Easy
-            </Button>
-          </div>
-        )}
-      </div>
-    </main>
+          <Button
+            variant="secondary"
+            onClick={() => handleReview(ReviewQuality.HARD)}
+          >
+            Hard
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => handleReview(ReviewQuality.GOOD)}
+          >
+            Good
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => handleReview(ReviewQuality.EASY)}
+          >
+            Easy
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }
