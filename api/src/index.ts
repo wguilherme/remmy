@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { env, connectDB } from './config'
+import { router } from './routes'
 
 // Conecta ao MongoDB
 await connectDB()
@@ -27,11 +28,18 @@ const app = new Elysia()
       return { error: 'Not Found' }
     }
 
+    if (code === 'VALIDATION') {
+      set.status = 400
+      return { error: 'Validation Error', details: error.message }
+    }
+
     set.status = 500
     return { error: 'Internal Server Error' }
   })
   // Health check
   .get('/health', () => ({ status: 'ok' }))
+  // Rotas da API
+  .use(router)
 
 // Inicia o servidor
 app.listen(env.PORT, () => {
