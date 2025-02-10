@@ -1,0 +1,25 @@
+{
+  "name": "remmy-api",
+  "version": "1.0.0",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^0.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "elysia": "^0.8.17",
+    "mongoose": "^8.10.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "bun-types": "latest",
+    "typescript": "^5.7.3"
+  }
+}
